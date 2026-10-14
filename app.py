@@ -90,7 +90,7 @@ app_ui = ui.page_fluid(
                    Intra-Abdominal Infection; Genitourinary Infections. etc.
                    2. Click on 'Submit' to join and display the input text.
                    3. Short response radio-button can be used in case of time constrains in a clinical setting.
-                   3. Use the additional buttons to see different transformations of the joined text.
+                   4. Use the additional buttons to see different transformations of the joined text.
                    4. Click 'Reset' to clear all input fields.
                    """)
                 )
@@ -122,7 +122,7 @@ def server(input, output, session):
     response_length1_value = reactive.Value(300)  # Default to 300 tokens
     response_length2_value = reactive.Value(50)
     
-    input_names = ["Dianosis", "Demographic", "Vital_signs", "Laboratory_findings", "Medical_history", "Special_comments"]
+    input_names = ["Diagnosis", "Demographic", "Vital_signs", "Laboratory_findings", "Medical_history", "Special_comments"]
 
     @reactive.Effect
     @reactive.event(input.submit)
@@ -171,7 +171,7 @@ def server(input, output, session):
     @reactive.Effect
     @reactive.event(input.result1_btn)
     def get_result1():
-        query_engine_sepsis = create_query_engine("The path to the vector store sepsis_management_chroma_db", "sepsis_management")
+        query_engine_sepsis = create_query_engine("sepsis_management_chroma_db", "sepsis_management")
         query_sepsis_management = f"The sepsis management recommendations you provide should be maximally based on the queried database and {joined_text_value.get()}. The length of your response should not exceed {response_length1_value.get()} tokens."
         sepsis_recommendations = query_engine_sepsis.query(query_sepsis_management)
 #        result1_text.set(query_engine_sepsis.query(joined_text_value.get()))
@@ -180,7 +180,7 @@ def server(input, output, session):
     @reactive.Effect
     @reactive.event(input.result2_btn)
     def get_result2(): 
-        query_engine_antibiotics = create_query_engine("The path to the vector store sepsis_antibiotics_chroma_db",
+        query_engine_antibiotics = create_query_engine("sepsis_antibiotics_chroma_db",
                                                        "sepsis_antibiotic_recommendations")
         query_antibiotics = f"The antibiotics recommendations you provide should be maximally based on the queried database and {input.input6()}. When possible, recommend particular antibiotics and their doses."
         antibiotic_recommendations = query_engine_antibiotics.query(query_antibiotics)
@@ -190,9 +190,10 @@ def server(input, output, session):
     @reactive.event(input.result3_btn)
     def get_result3():
         combined_result = f"{result1_text.get()} | {result2_text.get()}"
-        compliance_response = create_query_engine("The path to the vector store sepsis_guidelines_chroma_db",
+        compliance_response = create_query_engine("sepsis_guidelines_chroma_db",
                                                   "sepsis_management_guidelines")
-        compliance_content = compliance_response.get_content() if hasattr(compliance_response, 'get_content') else str(compliance_response)
+        compliance_query = f"Check if the following sepsis management recommendations comply with current sepsis management guidelines. Return 'compliant' or 'non-compliant': {combined_result}"
+        compliance_content = str(compliance_response.query(compliance_query))
 
 #        print("Compliance response:", compliance_content)  # Debug print
 
